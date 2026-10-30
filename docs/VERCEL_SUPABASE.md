@@ -39,6 +39,20 @@ Keep `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `INITIAL_ADMIN_PASSWORD` s
 
 The PostgreSQL client disables prepared statements for the transaction pooler and verifies TLS certificates and hostnames. If your connection requires a specific CA, obtain the trusted certificate from Supabase and configure `PGSSLROOTCERT` to its bundled file. Do not work around a trust error by disabling verification or changing to `sslmode=disable/require`.
 
+If the admin reports the database is unavailable, reload it and inspect the latest **runtime** log in Vercel. The safe exception class identifies the next check without printing credentials:
+
+| Logged class | Next check |
+| --- | --- |
+| `DatabaseAuthenticationError` | Replace the password placeholder using the **Supabase project database password**, distinct from the website admin password; percent-encode reserved characters. |
+| `DatabasePoolerIdentityError` | Copy the entire URI from the project's Transaction pooler dialog again, preserving its hostname and `postgres.PROJECT_REF` username. |
+| `DatabaseTLSVerificationError` | Configure the trusted Supabase CA as documented; keep certificate and hostname verification enabled. |
+| `DatabaseHostnameError` | Check the hostname copied from Connect and project availability; do not invent a host from the project region. |
+| `DatabaseNetworkError` / `DatabaseTimeoutError` | Check that the project is running, network restrictions allow Vercel, and the shared pooler endpoint is reachable. |
+| `DatabaseConfigurationError` | Check PostgreSQL URI syntax, encoded password, and database name. |
+| `DatabaseSchemaError` | Confirm the setup SQL ran in this same project and the backend role has access to the private schema. |
+
+Local tests cover these classifications and credential redaction, including a real PostgreSQL authentication failure. They do not establish which failure your real deployment has encountered.
+
 **Preview isolation:** use a separate empty Supabase project/bucket for ordinary Vercel Preview deployments. Set their credentials only for Preview. Leave `PUBLIC_BASE_URL` unset in Preview so the app uses Vercel's trusted deployment hostname. Never point routine test deployments at an active production database. The initial production candidate below is tested before changing domains and imports only owner-approved initial catalog data.
 
 ## 3. Upload without GitHub

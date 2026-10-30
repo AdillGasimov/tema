@@ -17,7 +17,7 @@ from test_shop import ShopTest as _ShopTest
 from mikrofiber.app import create_app
 from mikrofiber.__main__ import backup, seed
 from mikrofiber.hosted_backup import restore_postgres
-from mikrofiber.db import get_db, init_db
+from mikrofiber.db import get_db, init_db, connect, DatabaseAuthenticationError
 
 # Import the base without exposing another TestCase class to unittest discovery.
 ShopBehavior = _ShopTest
@@ -43,6 +43,14 @@ class PostgresShopTest(ShopBehavior):
             if getattr(self, 'dbname', None):
                 with psycopg.connect(os.environ['PG_TEST_URL'], autocommit=True) as db:
                     db.execute(sql.SQL('DROP DATABASE {} WITH (FORCE)').format(sql.Identifier(self.dbname)))
+
+    def test_real_authentication_failure_has_a_safe_category(self):
+        parts = urlsplit(self.app.config['DATABASE'])
+        wrong = parts._replace(netloc=f'{parts.username}:intentionally-wrong-local-password@{parts.hostname}:{parts.port}')
+        with self.assertRaises(DatabaseAuthenticationError) as failure:
+            connect(urlunsplit(wrong))
+        self.assertNotIn('intentionally-wrong-local-password', str(failure.exception))
+        self.assertNotIn('postgresql://', str(failure.exception))
 
     def test_backup_restore_includes_orders_images_and_admin(self):
         seed(self.app)

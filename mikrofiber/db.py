@@ -3,6 +3,7 @@ import sqlite3
 import os
 import re
 import ssl
+import certifi
 from collections.abc import Mapping
 from decimal import Decimal
 import psycopg
@@ -19,6 +20,70 @@ def now():
 
 def is_postgres(path):
     return str(path).startswith(('postgres://', 'postgresql://'))
+
+
+class DatabaseConnectionError(sqlite3.OperationalError):
+    """Safe operator-facing category; never retain the native message/DSN."""
+
+
+class DatabaseAuthenticationError(DatabaseConnectionError):
+    pass
+
+
+class DatabaseTLSVerificationError(DatabaseConnectionError):
+    pass
+
+
+class DatabaseHostnameError(DatabaseConnectionError):
+    pass
+
+
+class DatabaseNetworkError(DatabaseConnectionError):
+    pass
+
+
+class DatabaseTimeoutError(DatabaseConnectionError):
+    pass
+
+
+class DatabasePoolerIdentityError(DatabaseConnectionError):
+    pass
+
+
+class DatabaseConfigurationError(DatabaseConnectionError):
+    pass
+
+
+class DatabaseSchemaError(DatabaseConnectionError):
+    pass
+
+
+def safe_database_error(error):
+    # Inspect native details only to choose a fixed class. Never interpolate
+    # their text into the resulting error, API response, traceback, or logs.
+    message = str(error).lower()
+    state = getattr(error, 'sqlstate', None)
+    if 'tenant or user not found' in message:
+        kind = DatabasePoolerIdentityError
+    elif state in ('28P01', '28000') or 'password authentication failed' in message or 'authentication failed' in message:
+        kind = DatabaseAuthenticationError
+    elif ('certificate verify failed' in message or 'certificate verification failed' in message or
+          'root certificate' in message or 'ssl error' in message or 'self-signed certificate' in message):
+        kind = DatabaseTLSVerificationError
+    elif ('could not translate host name' in message or 'name or service not known' in message or
+          'nodename nor servname' in message or 'name resolution' in message):
+        kind = DatabaseHostnameError
+    elif 'timeout' in message or 'timed out' in message or state == '57014':
+        kind = DatabaseTimeoutError
+    elif 'network is unreachable' in message or 'connection refused' in message or 'no route to host' in message:
+        kind = DatabaseNetworkError
+    elif state in ('42P01', '3F000', '42501'):
+        kind = DatabaseSchemaError
+    elif state == '3D000' or isinstance(error, psycopg.ProgrammingError):
+        kind = DatabaseConfigurationError
+    else:
+        kind = DatabaseConnectionError
+    return kind('PostgreSQL operation unavailable. See the safe error category in the server log.')
 
 
 class Row(Mapping):
@@ -51,10 +116,10 @@ def postgres_options(url):
     # use a disposable loopback PostgreSQL instance without TLS.
     if host not in ('127.0.0.1', 'localhost', '::1'):
         options['sslmode'] = 'verify-full'
+        system_ca = ssl.get_default_verify_paths().cafile
+        default_ca = system_ca if system_ca and Path(system_ca).is_file() else certifi.where()
         options.setdefault('sslrootcert', os.environ.get('PGSSLROOTCERT') or
-                           os.environ.get('SSL_CERT_FILE') or ssl.get_default_verify_paths().cafile)
-        if not options.get('sslrootcert'):
-            raise ValueError('A trusted PostgreSQL CA bundle is required.')
+                           os.environ.get('SSL_CERT_FILE') or default_ca)
     options.setdefault('connect_timeout', '10')
     return options
 
@@ -78,8 +143,10 @@ class Postgres:
             return self.raw.execute(query, params, prepare=False)
         except psycopg.IntegrityError:
             raise sqlite3.IntegrityError('Database constraint rejected the operation') from None
-        except psycopg.OperationalError:
-            raise sqlite3.OperationalError('PostgreSQL operation unavailable') from None
+        except psycopg.OperationalError as error:
+            raise safe_database_error(error) from None
+        except (psycopg.errors.UndefinedTable, psycopg.errors.InvalidSchemaName, psycopg.errors.InsufficientPrivilege) as error:
+            raise safe_database_error(error) from None
 
     def commit(self):
         self.raw.commit()
@@ -95,8 +162,8 @@ def connect(path):
     if is_postgres(path):
         try:
             return Postgres(path)
-        except psycopg.OperationalError:
-            raise sqlite3.OperationalError('PostgreSQL connection unavailable') from None
+        except psycopg.Error as error:
+            raise safe_database_error(error) from None
     db = sqlite3.connect(path, timeout=15, isolation_level=None)
     db.row_factory = sqlite3.Row
     db.execute('PRAGMA foreign_keys=ON')
