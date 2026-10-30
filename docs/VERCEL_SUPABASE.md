@@ -70,6 +70,8 @@ If your project has old custom build/output settings or another framework select
 4. Check the storefront, `/mikrofiber-desmal.html`, mobile layout, category filters, private preview, uploads, logout/access protection and real storage URLs. Costs must be absent from `/api/catalog`. Generate a referral QR and verify it points to `https://mikrofiber.shop/?ref=CODE`.
 5. Use a disposable staging database to test actual order submission, price/stock changes, confirmation, delivery, payment and commission reversals. Automated tests here use disposable local databases and a mocked storage service; **your real Supabase, Vercel build, and real WhatsApp opening still need this verification**. Do not confirm invented orders as real sales on an active shop.
 
+If `/admin` says **Initial admin setup needs correction**, read the named setting. `INITIAL_ADMIN_USERNAME` must use 3–80 ASCII letters/digits/dots/underscores/hyphens; `owner` is a suitable value. Email addresses, quotes, spaces and non-ASCII letters are not accepted for this username. `INITIAL_ADMIN_PASSWORD` must be 14–1024 characters. Enter both values in **Production**, save and redeploy. The message never shows supplied values or a password. Invalid initial settings disable first-account creation while the storefront and existing accounts remain available. They do not enable public registration or overwrite stored users.
+
 ## 5. Promote after verification
 
 When the candidate passes and you have verified inventory, photo persistence, database access and backups, switch the existing project's production domains to the candidate:

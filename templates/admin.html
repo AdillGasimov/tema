@@ -5,6 +5,9 @@
 <header><a href="/" class="brand">Mikrofiber<span>.shop</span></a><span>Şəxsi idarəetmə</span><button id="logout" hidden>Çıxış</button></header>
 <div id="notice" role="status" hidden></div>
 <main>
+{% if bootstrap_errors %}
+<section class="card" role="alert"><h2>Initial admin setup needs correction</h2><p>Update these values in Vercel → Settings → Environment Variables → Production, then redeploy. Existing accounts can still sign in.</p><ul>{% for error in bootstrap_errors %}<li>{{ error }}</li>{% endfor %}</ul><p>Your password is not displayed here.</p></section>
+{% endif %}
 <section id="loginPanel" class="card login" hidden><p class="eyebrow">XOŞ GƏLMİSİNİZ</p><h1>Mağazanızı idarə edin</h1><p>Məhsullar, sifariş sorğuları və partnyorlar bir yerdə.</p><form id="loginForm"><label>İstifadəçi adı<input id="username" autocomplete="username" required maxlength="80"></label><label>Şifrə<input id="password" type="password" autocomplete="current-password" required maxlength="1024"></label><button class="primary" id="loginButton">Daxil ol</button></form><small>İlk istifadəçi və şifrə serverdə yaradılır. Standart şifrə yoxdur.</small></section>
 <div id="dashboard" hidden>
 <nav aria-label="İdarəetmə bölmələri"><button data-tab="products" class="active">Məhsullar</button><button data-tab="categories">Kateqoriyalar</button><button data-tab="orders">Sifariş sorğuları</button><button data-tab="partners">Partnyorlar və QR</button><button data-tab="audit">Əməliyyat jurnalı</button></nav>

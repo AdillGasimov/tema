@@ -138,6 +138,67 @@ class HostedTest(unittest.TestCase):
             csrf = normal.get('/api/admin/session').json['csrf']
             self.assertEqual(normal.post('/api/admin/login', json={'username': 'owner', 'password': env['INITIAL_ADMIN_PASSWORD']}, headers={'X-CSRF-Token': csrf}).status_code, 200)
 
+    def test_invalid_initial_settings_leave_app_available_and_block_registration(self):
+        cases = [
+            ('private-user-value ', 'private-password-long-enough', 'INITIAL_ADMIN_USERNAME is invalid'),
+            ('"owner"', 'private-password-long-enough', 'INITIAL_ADMIN_USERNAME is invalid'),
+            ('private-user@example.com', 'private-password-long-enough', 'INITIAL_ADMIN_USERNAME is invalid'),
+            ('', 'private-password-long-enough', 'INITIAL_ADMIN_USERNAME is missing'),
+            ('owner', 'private9', 'INITIAL_ADMIN_PASSWORD is too short'),
+            ('owner', '', 'INITIAL_ADMIN_PASSWORD is missing'),
+            ('owner', 'Z' * 1025, 'INITIAL_ADMIN_PASSWORD is too long'),
+        ]
+        for i, (username, password, expected) in enumerate(cases):
+            with self.subTest(expected=expected, case=i):
+                root = self.fixture.root / ('invalid-bootstrap-' + str(i))
+                cfg = {'DATA_DIR': str(root), 'DATABASE': str(root / 'shop.sqlite3'), 'MEDIA_DIR': str(root / 'media'),
+                       'STORAGE_BACKEND': 'local', 'COOKIE_SECURE': False, 'PUBLIC_BASE_URL': 'http://localhost'}
+                with patch.dict(os.environ, {'INITIAL_ADMIN_USERNAME': username, 'INITIAL_ADMIN_PASSWORD': password}):
+                    with self.assertLogs('mikrofiber.app', level='WARNING') as logs:
+                        app = create_app(cfg)
+                c = app.test_client()
+                html = c.get('/admin').get_data(as_text=True)
+                self.assertIn(expected, html)
+                self.assertEqual(c.get('/').status_code, 200)
+                csrf = c.get('/api/admin/session').json['csrf']
+                r = c.post('/api/admin/login', json={'username': 'owner', 'password': 'attempted-private-password'}, headers={'X-CSRF-Token': csrf})
+                self.assertEqual(r.status_code, 503)
+                self.assertIn(expected, r.json['error'])
+                diagnostics = html + r.get_data(as_text=True) + ' '.join(logs.output)
+                if password:
+                    self.assertNotIn(password, diagnostics)
+                if username != 'owner' and username:
+                    self.assertNotIn(username, diagnostics)
+                self.assertEqual(c.get('/api/admin/products').status_code, 401)
+                with app.app_context():
+                    from mikrofiber.db import get_db
+                    self.assertEqual(get_db().execute('SELECT COUNT(*) FROM admins').fetchone()[0], 0)
+
+    def test_existing_account_still_works_with_invalid_bootstrap_variables(self):
+        cfg = {key: self.app.config[key] for key in ('DATA_DIR', 'DATABASE', 'MEDIA_DIR', 'COOKIE_SECURE', 'PUBLIC_BASE_URL')}
+        cfg['STORAGE_BACKEND'] = 'local'
+        with patch.dict(os.environ, {'INITIAL_ADMIN_USERNAME': 'invalid-user@example.com', 'INITIAL_ADMIN_PASSWORD': 'short'}):
+            with self.assertLogs('mikrofiber.app', level='WARNING'):
+                app = create_app(cfg)
+        c = app.test_client()
+        csrf = c.get('/api/admin/session').json['csrf']
+        response = c.post('/api/admin/login', json={'username': 'owner', 'password': 'test-only-long-password'}, headers={'X-CSRF-Token': csrf})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(c.get('/api/admin/products').status_code, 200)
+
+    def test_no_initial_credentials_cannot_create_an_account(self):
+        root = self.fixture.root / 'unconfigured-bootstrap'
+        cfg = {'DATA_DIR': str(root), 'DATABASE': str(root / 'shop.sqlite3'), 'MEDIA_DIR': str(root / 'media'),
+               'STORAGE_BACKEND': 'local', 'COOKIE_SECURE': False, 'PUBLIC_BASE_URL': 'http://localhost'}
+        with patch.dict(os.environ, {'INITIAL_ADMIN_USERNAME': '', 'INITIAL_ADMIN_PASSWORD': ''}):
+            app = create_app(cfg)
+        c = app.test_client()
+        csrf = c.get('/api/admin/session').json['csrf']
+        response = c.post('/api/admin/login', json={'username': 'owner', 'password': 'test-only-long-password'}, headers={'X-CSRF-Token': csrf})
+        self.assertEqual(response.status_code, 503)
+        self.assertIn('Set both INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD', response.json['error'])
+        self.assertEqual(c.get('/api/admin/products').status_code, 401)
+
     def test_vercel_candidate_origin_and_platform_client_address(self):
         from mikrofiber.db import connect
         database = self.app.config['DATABASE']

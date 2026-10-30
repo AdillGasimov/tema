@@ -23,6 +23,7 @@ from .db import audit, get_db, init_db, is_postgres, now, transaction
 from .images import store_image
 from .storage import StorageError, validate_storage, remote, media_url, persist_image, discard_new_image
 from .orders import create_order, normalize_code, order_json, update_order
+from .bootstrap import bootstrap_errors
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -74,9 +75,13 @@ def create_app(config=None):
     initial_username = os.environ.get('INITIAL_ADMIN_USERNAME', '')
     initial_password = os.environ.get('INITIAL_ADMIN_PASSWORD', '')
     initial_hash = None
-    if initial_username or initial_password:
-        if not re.fullmatch(r'[A-Za-z0-9_.-]{3,80}', initial_username) or not 14 <= len(initial_password) <= 1024:
-            raise ValueError('INITIAL_ADMIN_USERNAME and a strong 14–1024 character INITIAL_ADMIN_PASSWORD must both be configured.')
+    initial_errors = bootstrap_errors(initial_username, initial_password)
+    if initial_errors:
+        # Initial-account mistakes must not crash every storefront request.
+        # Invalid bootstrap credentials never enable registration or replace an
+        # existing account. Log only safe explanations, never the supplied values.
+        app.logger.warning('Initial admin setup unavailable: %s', ' '.join(initial_errors))
+    elif initial_username and initial_password:
         initial_hash = generate_password_hash(initial_password)
 
     @app.teardown_appcontext
@@ -215,7 +220,7 @@ def create_app(config=None):
     @app.get('/admin')
     @app.get('/admin/')
     def admin_page():
-        response = make_response(render_template('admin.html'))
+        response = make_response(render_template('admin.html', bootstrap_errors=initial_errors))
         response.headers['X-Robots-Tag'] = 'noindex, nofollow'
         return response
 
@@ -275,7 +280,11 @@ def create_app(config=None):
         # Always run an expensive hash check, including unknown users.
         initial_candidate = not admin and initial_hash and username == initial_username
         target = admin['password_hash'] if admin else initial_hash if initial_candidate else app.config['DUMMY_PASSWORD_HASH']
-        if not check_password_hash(target, password) or (not admin and not initial_candidate):
+        password_matches = check_password_hash(target, password)
+        if not admin and not initial_hash and not get_db().execute('SELECT username FROM admins LIMIT 1').fetchone():
+            setup_details = ' '.join(initial_errors) if initial_errors else 'Set both INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD in Production.'
+            abort(503, 'Initial admin setup is incomplete. ' + setup_details + ' Save the settings and create a new deployment.')
+        if not password_matches or (not admin and not initial_candidate):
             abort(401, 'İstifadəçi adı və ya şifrə yanlışdır.')
         if not admin:
             with transaction() as db:
