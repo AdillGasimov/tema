@@ -1,0 +1,2 @@
+# Optional test tooling; not required by the production app.
+playwright==1.62.0

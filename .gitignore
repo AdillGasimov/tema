@@ -1,0 +1,11 @@
+.venv/
+var/
+__pycache__/
+*.pyc
+.env
+*.env
+test-results/
+.vercel/
+.env.*
+!.env.example
+!*.env.example

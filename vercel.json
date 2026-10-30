@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": ["mikrofiber/**", "templates/**", "static/**", "seed/original.html"],
+        "excludeFiles": ["var/**", ".venv/**", "tests/**", "test-results/**", ".env", "__pycache__/**"]
+      }
+    }
+  ],
+  "routes": [
+    {"src": "/(.*)", "dest": "/api/index.py"}
+  ]
+}

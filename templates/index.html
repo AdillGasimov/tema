@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mikrofiber Avto Qurulama Dəsmalı | Mikrofiber.shop</title>
+<meta name="description" content="Super hopdurucu mikrofiber avto qurulama dəsmalı. Lakı cızmır, tük qoymur. Ödəniş qapıda, 28 May metrosunda pulsuz təhvil.">
+<meta name="theme-color" content="#3e5243">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/store.css">
+<link rel="stylesheet" href="/static/catalog.css">
+</head>
+<body>
+<noscript><p class="wrap">Kataloq və sifariş üçün JavaScript-i aktiv edin. Kömək üçün WhatsApp: +{{ whatsapp_number }}.</p></noscript>
+<div class="promo" role="status"><span id="promoText"></span></div>
+<header><div class="hd wrap"><a class="logo" href="#">Mikrofiber<span>.shop</span></a><a class="call" href="https://wa.me/{{ whatsapp_number }}">💬 WhatsApp</a></div></header>
+<div id="previewBanner" class="preview-banner" hidden>Şəxsi önbaxış — bu səhifədən sifariş göndərilmir.</div>
+<main class="wrap">
+<section class="catalog" id="catalog"><div class="catalog-head"><h2>Məhsullar</h2><div><input type="search" id="catalogSearch" aria-label="Məhsul axtar" placeholder="Məhsul axtar…"><select id="catalogCategory" aria-label="Kateqoriya"><option value="">Bütün kateqoriyalar</option></select></div></div><p id="catalogStatus" role="status">Kataloq yüklənir…</p><div class="product-grid" id="productGrid"></div></section>
+<section class="hero" id="productHero" hidden>
+  <div class="gal">
+    <div class="g-frame">
+      <span class="g-badge" id="gBadge" hidden></span>
+      <div class="g-track" id="gTrack" tabindex="0" aria-label="Məhsul şəkilləri, sürüşdürün">
+
+
+
+      </div>
+      <span class="g-count" id="gCount">1 / 2</span>
+    </div>
+    <div class="g-thumbs" id="gThumbs"></div>
+  </div>
+  <div class="buy">
+    <div>
+      <span class="pill" id="productCategory">Məhsul</span>
+      <h1 id="productName">Məhsullar yüklənir…</h1>
+      <a class="rate towel-only" href="#reyler"><i>★★★★★</i> 4.9 · Müştəri rəylərini oxuyun</a>
+    </div>
+    <p class="lead" id="productDescription">Maşını yuyandan sonra suyu bir-iki silişlə yığır. Lakı cızmır, üzərində tük və ləkə qoymur.</p>
+    <div class="price"><b id="pNow"></b><s id="pOld" hidden></s><em id="pOff" hidden></em></div>
+    <div class="urg" role="status" id="availability">Mövcudluq yoxlanılır…</div>
+    <div class="trust"><div><span>💵</span>Ödəniş qapıda</div><div><span>🚇</span>Metroda pulsuz təhvil</div><div><span>💬</span>WhatsApp dəstəyi</div></div>
+    <ul class="ben towel-only">
+      <li>Suyu tez hopdurur, maşını bir-iki silişlə qurudur</li>
+      <li>Yumşaq burulmuş liflər lakı və şüşəni cızmır</li>
+      <li>Tük qoymur, şüşədə ləkə və xətt saxlamır</li>
+      <li>Kənarları haşiyəlidir, yuyulandan sonra formasını saxlayır</li>
+    </ul>
+    <fieldset><legend>Ölçü / rəng</legend><div class="sizes" id="sizes"></div></fieldset>
+    <fieldset><legend>Neçə ədəd?</legend><div class="bund" id="bund"></div></fieldset>
+
+    <form class="order" id="sifaris" novalidate>
+      <h2>Sifarişi rəsmiləşdir</h2>
+      <p class="osub">Ödəniş qapıda, məhsulu təhvil alanda.</p>
+      <b style="font-size:.875rem">Çatdırılma növü seçin:</b>
+      <div class="dl">
+        <button type="button" class="del on" id="dMetro"><b>🚇 28 May Metrosu</b><span>Ödənişsiz (0.00 AZN)</span></button>
+        <button type="button" class="del" id="dAddr"><b>📍 Ünvana Çatdırılma</b><span id="courierPrice">+3.99 AZN</span></button>
+      </div>
+      <div class="fld" id="fName"><label for="inName">Ad və soyad</label><input id="inName" autocomplete="name" placeholder="Məs: Elvin Məmmədov"><span class="err">Ad və soyadı yazın (ən azı 3 hərf)</span></div>
+      <div class="fld" id="fPhone"><label for="inPhone">Mobil nömrə</label><input id="inPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="050 123 45 67"><span class="err">Nömrəni düzgün yazın, məs: 050 123 45 67</span></div>
+      <div class="fld" id="fAddr"><label for="inAddr" id="addrLabel">Təhvil nöqtəsi / Metro çıxışı 🚇</label><input id="inAddr" autocomplete="street-address"><span class="err">Ünvanı dəqiq yazın, məs: Bakı, Nizami küç. 12</span></div>
+      <div class="fld"><label for="inNote">Qeyd <span>(istəyə bağlı)</span></label><textarea id="inNote" rows="2" placeholder="Kuryer üçün qeyd, fərqli ölçülər istəyirsinizsə bura yazın"></textarea></div>
+      <div class="fld"><label for="inReferral">Referal kodu <span>(istəyə bağlı)</span></label><input id="inReferral" maxlength="40" autocomplete="off" placeholder="Məs: USTA01"><small id="referralStatus" aria-live="polite"></small></div>
+      <div id="cartPanel" hidden><h3>Səbət</h3><div id="cartItems"></div><button type="button" class="minor" id="clearCart">Səbəti təmizlə</button></div>
+      <button type="button" class="minor" id="addCart" disabled>Seçilən məhsulu səbətə əlavə et</button>
+      <div class="sum" id="sum" aria-live="polite"></div>
+      <div class="ferr" id="ferr" role="alert" hidden>Qırmızı xanaları düzəldin, sonra yenidən basın.</div>
+      <button type="submit" class="go" id="submitBtn" disabled>📲 WhatsApp ilə sifariş et</button>
+      <p class="hint">Düyməni basanda sorğu əvvəl saxlanılır, sonra hazır mesaj kimi <b>+{{ whatsapp_number }}</b> nömrəsinə WhatsApp-da açılır. Mesajı göndərin, operator sizinlə əlaqə saxlayacaq.</p>
+      <div class="done" id="done" role="status" hidden>Sifariş sorğusu saxlanıldı. <b id="orderRef"></b><br>Bu, təsdiqlənmiş satış və ya ödəniş deyil. WhatsApp-da mesajı göndərin; operator sifarişi təsdiqləyəcək.<br>Açılmadısa: <a id="waLink" href="#" target="_blank" rel="noopener"><b>bura basın</b></a> və ya <a href="#" id="copyMsg"><b>mesajı kopyalayın</b></a>.</div>
+    </form>
+    <ol class="tl"><li><b>Sorğu</b>Sorğunuz saxlanılır</li><li><b>Təsdiq</b>Operator sizinlə əlaqə saxlayır</li><li><b>Çatdırılma</b>Razılaşdırılmış sifariş təhvil verilir</li></ol>
+  </div>
+</section>
+</main>
+
+<section class="sec cmp towel-only"><div class="wrap cg">
+  <div><h2>Köhnə mayka ilə silməyin fərqi</h2><p class="sub">Pambıq parça suyu lakın üstündə yayır. Mikrofiber isə suyu içinə çəkir.</p>
+  <figure class="cph"><img data-c="1" alt="Mikrofiber dəsmalın burulmuş lifləri yaxından" width="300" height="300"></figure></div>
+  <div class="tw"><table>
+    <thead><tr><th><span style="position:absolute;left:-9999px">Nə ilə müqayisə</span></th><th>Adi dəsmal</th><th class="us">Mikrofiber dəsmal</th></tr></thead>
+    <tbody>
+      <tr><th>Su</th><td class="th">Tez islanır, suyu yayır</td><td class="us">Suyu içinə çəkir, bir-iki silişdə qurudur</td></tr>
+      <tr><th>Tük</th><td class="th">Lakda və şüşədə tük qalır</td><td class="us">Tük qoymur</td></tr>
+      <tr><th>Lak</th><td class="th">Sərt liflər incə cızıq aça bilər</td><td class="us">Yumşaq liflər laka zərif toxunur</td></tr>
+      <tr><th>Şüşə</th><td class="th">Ləkə və xətt qalır</td><td class="us">Şüşə təmiz və parlaq qalır</td></tr>
+    </tbody></table></div>
+</div></section>
+
+<section class="sec towel-only"><div class="wrap hg">
+  <div><h2>Necə istifadə etməli</h2><p class="sub">Düzgün istifadə edəndə dəsmal lakı qoruyur və uzun müddət xidmət edir.</p>
+  <ol class="steps">
+    <li><div><h3>Maşını yaxşıca yaxalayın</h3><p>Yuyandan sonra köpüyü və qumu su ilə tam təmizləyin.</p></div></li>
+    <li><div><h3>Sərin və yavaşca çəkin</h3><p>Dəsmalı açıb lakın üstünə sərin, sonra özünüzə doğru çəkin. Bərk ovuşdurmağa ehtiyac yoxdur.</p></div></li>
+    <li><div><h3>Şüşəni sonda silin</h3><p>Şüşə və güzgüləri dəsmalın quru hissəsi ilə silin ki, ləkə qalmasın.</p></div></li>
+  </ol></div>
+  <figure class="hph"><img data-c="2" alt="Asma ilməyi olan mikrofiber dəsmal" width="433" height="577"></figure>
+</div></section>
+
+<section class="sec rvs towel-only" id="reyler"><div class="wrap"><h2>Müştəri rəyləri</h2><p class="sub">Dəsmalı alanların fikirləri</p><div class="rvg" id="rvg"></div></div></section>
+
+<section class="sec"><div class="wrap faq"><h2>Ətraflı məlumat</h2>
+  <details open class="towel-only"><summary>Qutuda nə var</summary><p>1 ədəd mikrofiber qurulama dəsmalı, seçdiyiniz ölçüdə: 50×60 sm və ya 60×90 sm. Bir neçə ədəd seçsəniz, hamısı eyni ölçüdə gəlir. Fərqli ölçülər istəsəniz, sifarişdə qeyd edin.</p></details>
+  <details class="towel-only"><summary>Qulluq qaydası</summary><p>40°C-dən isti olmayan suda, digər paltarlardan ayrı yuyun. Yumşaldıcı istifadə etməyin, çünki liflərin suyu hopdurmasını zəiflədir. Açıq havada qurudun və ütüləməyin.</p></details>
+  <details><summary>Çatdırılma və ödəniş</summary><p id="deliveryInfo">28 May metrosunda təhvil ödənişsizdir, ünvana çatdırılma +3.99 AZN-dir. Ödənişi məhsulu təhvil alanda, qapıda edirsiniz.</p></details>
+  <details><summary>Problem olarsa</summary><p>Məhsulla bağlı hər hansı problem olarsa, WhatsApp-da bizə yazın: <a href="https://wa.me/{{ whatsapp_number }}">+{{ whatsapp_number }}</a></p></details>
+</div></section>
+
+<footer>© 2026 Mikrofiber.shop · Ödəniş qapıda, çatdırılma Bakı və regionlara</footer>
+
+<div class="sticky" id="sticky" hidden><div class="si"><div><span class="sd" id="sd"></span><span class="stt" id="stt"></span></div><a href="#sifaris" class="go sm" id="sbtn">Sifariş et</a></div></div>
+<div class="toast" id="toast"><span>🛍️</span><span id="toastMsg"></span></div>
+
+<script type="module" src="/static/store.js"></script>
+</body>
+</html>

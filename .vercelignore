@@ -1,0 +1,13 @@
+.git
+.venv
+var
+test-results
+tests
+.env
+.env.*
+*.env
+!.env.example
+**/__pycache__
+*.pyc
+.agents
+.codex
